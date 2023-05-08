@@ -1,5 +1,6 @@
 from descriptions import simple_description
 
+from dotenv import load_dotenv, set_key
 import os
 
 import logging
@@ -19,7 +20,7 @@ import torch.nn.functional as F
 import torchtext
 import transformers
 
-import tqdm.notebook as tqdm # here
+import tqdm.notebook as tqdm  # here
 # from tqdm import tqdm
 
 from torch import Tensor
@@ -31,6 +32,9 @@ from transformers import (
 )
 
 import fluidsynth
+
+dotenv_path = './variables.env'
+load_dotenv(dotenv_path=dotenv_path)
 
 pretty_midi.instrument._HAS_FLUIDSYNTH = True
 pretty_midi.instrument.fluidsynth = fluidsynth
@@ -745,9 +749,9 @@ def remi2midi(events, bpm=120, time_signature=(4, 4), polyphony_limit=16):
             # get velocity
             velocity_index = int(events[i + 3].split('_')[-1])
             velocity = int(min(127, DEFAULT_VELOCITY_BINS[velocity_index]))
-                    # cast to int for pretty_midi "track.append(mido.Message(
-                    # 'note_on', time=self.time_to_tick(note.start),
-                    # channel=channel, note=note.pitch, velocity=note.velocity))"
+            # cast to int for pretty_midi "track.append(mido.Message(
+            # 'note_on', time=self.time_to_tick(note.start),
+            # channel=channel, note=note.pitch, velocity=note.velocity))"
             # get duration
             duration_index = int(events[i + 4].split('_')[-1])
             duration = DEFAULT_DURATION_BINS[duration_index]
@@ -857,8 +861,11 @@ def generate_sample_from_description(description):
     # convert the generated tokens to MIDI and write it to disk
     remi_events = remi_vocab.decode(sample["sequences"][0])
     pm = remi2midi(remi_events)
-    pm.write("sample_3.mid")
 
+    iterator = os.getenv('ITERATOR', '-1')
+    pm.write(f"./results/sample_{iterator}.mid")
+    iterator_incremented = str(int(iterator) + 1)
+    set_key(dotenv_path=dotenv_path ,key_to_set='ITERATOR', value_to_set=iterator_incremented)
 
     # synthesize the generated MIDI and display it: # TODO: synthesize
     audio = pm.fluidsynth()
@@ -866,14 +873,12 @@ def generate_sample_from_description(description):
     return IPython.display.Audio("sample.wav")
 
 
-
-
 if __name__ == '__main__':
     print("started")
+
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     # FIXME: loading the model
-
     model = Seq2SeqModule.load_from_checkpoint("checkpoints/figaro-expert.ckpt")
     model.freeze()
     model.eval()
