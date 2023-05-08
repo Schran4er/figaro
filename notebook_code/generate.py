@@ -1,5 +1,5 @@
 import logging
-import os
+import sys, os
 import re
 
 import IPython
@@ -14,7 +14,6 @@ from tokens import DescriptionVocab, RemiVocab
 
 desc_vocab = DescriptionVocab()
 remi_vocab = RemiVocab()
-
 
 dotenv_path = './variables.env'
 load_dotenv(dotenv_path=dotenv_path)
@@ -85,6 +84,16 @@ def make_example_from_description(description: str, desc_vocab=desc_vocab, remi_
     }
 
 
+class hide_prints:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
+
+
 def generate_sample_from_description(description, model):
     # parse the given description to model input
     n_bars = len(re.findall(r"<Bar_[0-9]+>", description))
@@ -99,8 +108,9 @@ def generate_sample_from_description(description, model):
     print(description.strip())
     print("===")
 
-    # generate a sample based on the description
-    sample = model.sample(batch, max_bars=n_bars, max_length=int(approx_n_tokens * 1.2))
+    with hide_prints():
+        # generate a sample based on the description
+        sample = model.sample(batch, max_bars=n_bars, max_length=int(approx_n_tokens * 1.2))
 
     # convert the generated tokens to MIDI and write it to disk
     remi_events = remi_vocab.decode(sample["sequences"][0])
