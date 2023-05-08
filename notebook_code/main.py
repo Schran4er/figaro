@@ -744,7 +744,10 @@ def remi2midi(events, bpm=120, time_signature=(4, 4), polyphony_limit=16):
             pitch = int(events[i + 2].split('_')[-1])
             # get velocity
             velocity_index = int(events[i + 3].split('_')[-1])
-            velocity = min(127, DEFAULT_VELOCITY_BINS[velocity_index])
+            velocity = int(min(127, DEFAULT_VELOCITY_BINS[velocity_index]))
+                    # cast to int for pretty_midi "track.append(mido.Message(
+                    # 'note_on', time=self.time_to_tick(note.start),
+                    # channel=channel, note=note.pitch, velocity=note.velocity))"
             # get duration
             duration_index = int(events[i + 4].split('_')[-1])
             duration = DEFAULT_DURATION_BINS[duration_index]
@@ -852,12 +855,12 @@ def generate_sample_from_description(description):
     sample = model.sample(batch, max_bars=n_bars, max_length=int(approx_n_tokens * 1.2))
 
     # convert the generated tokens to MIDI and write it to disk
-    # TODO: velocity must be integer! (outcommtend in pretty_midi atm)
     remi_events = remi_vocab.decode(sample["sequences"][0])
     pm = remi2midi(remi_events)
-    pm.write("sample.mid")
+    pm.write("sample_3.mid")
 
-    # synthesize the generated MIDI and display it
+
+    # synthesize the generated MIDI and display it: # TODO: synthesize
     audio = pm.fluidsynth()
     soundfile.write("sample.wav", audio, 44100)
     return IPython.display.Audio("sample.wav")
