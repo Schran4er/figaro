@@ -863,14 +863,18 @@ def generate_sample_from_description(description):
     pm = remi2midi(remi_events)
 
     iterator = os.getenv('ITERATOR', '-1')
-    pm.write(f"./results/sample_{iterator}.mid")
+    mid_path = f"./results/mid/sample_{iterator}.mid"
+    pm.write(mid_path)
+
+    # synthesize the generated MIDI and display it:
+    audio = pm.fluidsynth()
+    audio_path = f"./results/wav/sample{iterator}.wav"
     iterator_incremented = str(int(iterator) + 1)
     set_key(dotenv_path=dotenv_path ,key_to_set='ITERATOR', value_to_set=iterator_incremented)
 
-    # synthesize the generated MIDI and display it: # TODO: synthesize
-    audio = pm.fluidsynth()
-    soundfile.write("sample.wav", audio, 44100)
-    return IPython.display.Audio("sample.wav")
+    soundfile.write(audio_path, audio, 44100)
+    return IPython.display.Audio(audio_path)
+
 
 
 if __name__ == '__main__':
@@ -878,7 +882,6 @@ if __name__ == '__main__':
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    # FIXME: loading the model
     model = Seq2SeqModule.load_from_checkpoint("checkpoints/figaro-expert.ckpt")
     model.freeze()
     model.eval()
