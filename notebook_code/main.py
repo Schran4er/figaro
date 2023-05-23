@@ -2,7 +2,7 @@
     These files are heavily based on the figaro jupyter notebook online demonstration
 """""
 
-from descriptions import simple_description, chords_description
+from descriptions import my_simple_description, simple_description, chords_description
 
 import torch
 import generate
@@ -24,4 +24,6 @@ if __name__ == '__main__':
     print("started")
     model = load_model()
 
-    generate.generate_sample_from_description(simple_description, model)
+    # generate.generate_sample_from_description(simple_description, model)
+    generate.generate_sample_from_description(my_simple_description, model)
+    # generate.generate_sample_from_description(chords_description, model)

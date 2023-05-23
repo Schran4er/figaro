@@ -7,9 +7,9 @@ import torch.nn.functional as F
 import math
 import numpy as np
 import random
-from datasets import MidiDataModule
-from vocab import RemiVocab
-from constants import PAD_TOKEN, BOS_TOKEN, EOS_TOKEN, MASK_TOKEN
+from src.datasets import MidiDataModule
+from src.vocab import RemiVocab
+from src.constants import PAD_TOKEN, BOS_TOKEN, EOS_TOKEN, MASK_TOKEN
 
 import transformers
 from transformers import (

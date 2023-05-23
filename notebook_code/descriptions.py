@@ -1,3 +1,12 @@
+my_simple_description = """
+<Bar_1> <Time Signature_4/4> <Note Density_1> <Mean Pitch_16> <Mean Velocity_19> <Mean Duration_32>
+<Instrument_Acoustic Grand Piano>
+<Chord_C:maj>
+<Bar_2> <Time Signature_4/4> <Note Density_1> <Mean Pitch_16> <Mean Velocity_19> <Mean Duration_32>
+<Instrument_Acoustic Grand Piano>
+<Chord_C:maj>
+"""
+
 simple_description = """
 <Bar_1> <Time Signature_4/4> <Note Density_1> <Mean Pitch_16> <Mean Velocity_19> <Mean Duration_32>
 <Instrument_Acoustic Grand Piano>
