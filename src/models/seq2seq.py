@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
 import math
-from datasets import MidiDataModule
-from vocab import RemiVocab, DescriptionVocab
-from constants import PAD_TOKEN, EOS_TOKEN, BAR_KEY, POSITION_KEY
+from src.datasets import MidiDataModule
+from src.vocab import RemiVocab, DescriptionVocab
+from src.constants import PAD_TOKEN, EOS_TOKEN, BAR_KEY, POSITION_KEY
 
 import transformers
 from transformers import (
@@ -118,9 +118,9 @@ class Seq2SeqModule(pl.LightningModule):
 
         self.save_hyperparameters()
 
-    def get_datamodule(self, midi_files, **kwargs):
+    def get_datamodule(self, input_files, **kwargs):
         return MidiDataModule(
-            midi_files,
+            input_files,
             self.context_size,
             description_flavor=self.description_flavor,
             max_bars=self.max_bars,

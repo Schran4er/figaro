@@ -6,6 +6,8 @@ import math
 import os
 import pickle
 
+from enum import Enum
+
 from input_representation import InputRepresentation
 from vocab import RemiVocab, DescriptionVocab
 from constants import (
@@ -17,6 +19,14 @@ from constants import (
 CACHE_PATH = os.getenv('CACHE_PATH', os.getenv('SCRATCH', os.getenv('TMPDIR', './temp')))
 LATENT_CACHE_PATH = os.getenv('LATENT_CACHE_PATH',
                               os.path.join(os.getenv('SCRATCH', os.getenv('TMPDIR', './temp')), 'latent'))
+
+
+class DataSetType(Enum):
+    MIDI = 'MIDI'
+    JSON = 'json'
+
+
+dataset_type = DataSetType.JSON
 
 
 class MidiDataModule(pl.LightningDataModule):
@@ -239,10 +249,12 @@ class MidiDataset(IterableDataset):
         self.split = _get_split(self.files, worker_info)
 
         split_len = len(self.split)
-
         for i in range(split_len):
             try:
-                current_file = self.load_file(self.split[i])
+                if dataset_type == DataSetType.MIDI:
+                    current_file = self.load_file(self.split[i], dataset_type=DataSetType.MIDI)
+                elif dataset_type == DataSetType.JSON:
+                    current_file = self.load_file(self.split[i], dataset_type=DataSetType.JSON)
             except ValueError as err:
                 if self.print_errors:
                     print(err)
@@ -414,8 +426,12 @@ class MidiDataset(IterableDataset):
         }
         return [token for token in desc if len(token.split('_')) == 0 or valid_keys[token.split('_')[0]]]
 
-    def load_file(self, file):
-        name = os.path.basename(file)
+    def load_file(self, file, dataset_type=DataSetType.MIDI):
+        if dataset_type == DataSetType.MIDI:
+            name = os.path.basename(file)
+        elif dataset_type == DataSetType.JSON:
+            name = str(file[0])
+
         if self.cache_path and self.use_cache:
             cache_file = os.path.join(self.cache_path, name)
 
@@ -425,9 +441,15 @@ class MidiDataset(IterableDataset):
         except Exception:
             # If there's no cached version, compute the representations
             try:
-                rep = InputRepresentation(file, strict=True)
-                events = rep.get_remi_events()
-                description = rep.get_description()
+                if dataset_type == DataSetType.MIDI:
+                    rep = InputRepresentation(file, strict=True)
+                    events = rep.get_remi_events()
+                    description = rep.get_description()
+
+                elif dataset_type == DataSetType.JSON:
+                    events = None  # TODO: parse events
+                    description = None  # TODO: parse description
+
             except Exception as err:
                 raise ValueError(f'Unable to load file {file}') from err
 
