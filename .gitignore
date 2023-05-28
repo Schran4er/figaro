@@ -1,6 +1,7 @@
 __pycache__
 *.ckpt
 *.mid
+*.midi
 *.wav
 *.tar.gz
 *.zip
