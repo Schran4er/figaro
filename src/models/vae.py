@@ -1,5 +1,3 @@
-
-
 import pytorch_lightning as pl
 import torch.optim
 import torch.nn as nn
@@ -180,7 +178,8 @@ class VqVaeModule(pl.LightningModule):
         self.max_lookahead = max_lookahead
         self.disable_vq = disable_vq
 
-        self.vocab = RemiVocab()
+        self.vocab = RemiVocab(False) # todo change later
+        # self.vocab = RemiVocab()
         
         self.pad_token = self.vocab.to_i(PAD_TOKEN)
         self.bos_token = self.vocab.to_i(BOS_TOKEN)
@@ -216,7 +215,7 @@ class VqVaeModule(pl.LightningModule):
 
         self.in_layer = nn.Embedding(len(self.vocab), self.d_model)
         self.out_layer = nn.Linear(self.d_model, len(self.vocab), bias=False)
-        
+
         self.vq_embed = VectorQuantizeEMA(self.d_latent, self.n_codes, self.n_groups)
         self.pooling = nn.Linear(self.d_model, self.d_latent, bias=False)
         self.unpooling = nn.Linear(self.d_latent, self.d_model, bias=False)
@@ -438,6 +437,3 @@ class VqVaeModule(pl.LightningModule):
         window_mask[:, 0] = 1
 
         return window_mask.unsqueeze(0).repeat(batch_size, 1, 1)
-
-
-

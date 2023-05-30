@@ -12,7 +12,9 @@ from model import Seq2SeqModule
 def load_model():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    model = Seq2SeqModule.load_from_checkpoint("checkpoints/figaro-expert.ckpt")
+    # model = Seq2SeqModule.load_from_checkpoint("checkpoints/figaro-expert.ckpt")
+    model = Seq2SeqModule.load_from_checkpoint("../checkpoints/my_new_figaro_checkpoint.ckpt")
+    model.description_flavor = 'description'
     model.freeze()
     model.eval()
     model.to(device)

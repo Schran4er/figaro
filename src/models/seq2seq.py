@@ -67,6 +67,7 @@ class Seq2SeqModule(pl.LightningModule):
         self.warmup_steps = warmup_steps
         self.max_steps = max_steps
 
+        # self.vocab = RemiVocab(False) # todo change later
         self.vocab = RemiVocab()
 
         encoder_config = BertConfig(
@@ -105,7 +106,8 @@ class Seq2SeqModule(pl.LightningModule):
             else:
                 self.latent_in = GroupEmbedding(n_codes, n_groups, self.d_model, inner_dim=self.d_latent // n_groups)
         if self.description_flavor in ['description', 'both']:
-            desc_vocab = DescriptionVocab()
+            # desc_vocab = DescriptionVocab() # fixme
+            desc_vocab = DescriptionVocab(update_vocab=False)
             self.desc_in = nn.Embedding(len(desc_vocab), self.d_model)
 
         if self.description_flavor == 'both':

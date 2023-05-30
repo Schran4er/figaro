@@ -249,6 +249,7 @@ class MidiDataset(IterableDataset):
         self.split = _get_split(self.files, worker_info)
 
         split_len = len(self.split)
+        split_len = 1
         for i in range(split_len):
             try:
                 if dataset_type == DataSetType.MIDI:
@@ -329,12 +330,20 @@ class MidiDataset(IterableDataset):
                 if self.max_len > 0:
                     src = src[:self.max_len + 1]
 
-                x = {
-                    'input_ids': src,
-                    'file': os.path.basename(self.split[i]),
-                    'bar_ids': b_ids,
-                    'position_ids': p_ids,
-                }
+                if dataset_type == DataSetType.MIDI:
+                    x = {
+                        'input_ids': src,
+                        'file': os.path.basename(self.split[i]),
+                        'bar_ids': b_ids,
+                        'position_ids': p_ids,
+                    }
+                elif dataset_type == DataSetType.JSON:
+                    x = {
+                        'input_ids': src,
+                        'file': self.split[i],
+                        'bar_ids': b_ids,
+                        'position_ids': p_ids,
+                    }
 
                 if self.description_flavor in ['description', 'both']:
                     # Assume that bar_ids are in ascending order (except for EOS)
@@ -447,8 +456,12 @@ class MidiDataset(IterableDataset):
                     description = rep.get_description()
 
                 elif dataset_type == DataSetType.JSON:
-                    events = None  # TODO: parse events
-                    description = None  # TODO: parse description
+                    # events = None  # TODO: parse events
+                    # description = None  # TODO: parse description
+                    events = ['Bar_1', 'Time Time Signature_4/4', 'Position_0', 'Tempo_16', 'Position_0', 'Chord_G:maj', 'Position_0', 'Instrument_Acoustic Grand Piano', 'Pitch_67', 'Velocity_17', 'Duration_5', 'Position_4', 'Instrument_Acoustic Grand Piano', 'Pitch_71', 'Velocity_17', 'Duration_5', 'Position_9', 'Instrument_Acoustic Grand Piano', 'Pitch_74', 'Velocity_17', 'Duration_5', 'Position_14', 'Instrument_Acoustic Grand Piano', 'Pitch_79', 'Velocity_17', 'Duration_11', 'Position_25', 'Instrument_Acoustic Grand Piano', 'Pitch_78', 'Velocity_17', 'Duration_11', 'Position_36', 'Instrument_Acoustic Grand Piano', 'Pitch_79', 'Velocity_17', 'Duration_18']
+                    description = ['Bar_1', 'Time Signature_4/4', 'Note Density_1', 'Mean Velocity_17', 'Mean Pitch_19', 'Mean Duration_15', 'Instrument_Acoustic Grand Piano', 'Chord_G:sus']
+
+
 
             except Exception as err:
                 raise ValueError(f'Unable to load file {file}') from err

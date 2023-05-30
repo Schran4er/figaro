@@ -65,7 +65,6 @@ class Tokens:
         )
 
 
-
 class Vocab:
     def __init__(self, counter, specials=[PAD_TOKEN, UNK_TOKEN, BOS_TOKEN, EOS_TOKEN, MASK_TOKEN], unk_token=UNK_TOKEN):
         self.vocab = torchtext.vocab.vocab(counter)
@@ -103,7 +102,11 @@ class RemiVocab(Vocab):
         midi_tokens = Tokens.get_midi_tokens()
         chord_tokens = Tokens.get_chord_tokens()
 
-        self.tokens = midi_tokens + chord_tokens
+        new_qualities = ['sus', 'power', '6']
+        pitch_classes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        new_chord_quality_vocab = [f'{root}:{quality}' for root in pitch_classes for quality in new_qualities]
+
+        self.tokens = midi_tokens + chord_tokens + new_chord_quality_vocab
 
         counter = Counter(self.tokens)
         super().__init__(counter)
@@ -121,6 +124,9 @@ class DescriptionVocab(Vocab):
         pitch_tokens = [f'{MEAN_PITCH_KEY}_{i}' for i in range(len(DEFAULT_MEAN_PITCH_BINS))]
         duration_tokens = [f'{MEAN_DURATION_KEY}_{i}' for i in range(len(DEFAULT_MEAN_DURATION_BINS))]
 
+        new_qualities = ['sus', 'power', '6']
+        pitch_classes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        new_chord_quality_vocab = [f'{root}:{quality}' for root in pitch_classes for quality in new_qualities]
         self.tokens = (
                 time_sig_tokens +
                 instrument_tokens +
@@ -129,7 +135,8 @@ class DescriptionVocab(Vocab):
                 velocity_tokens +
                 pitch_tokens +
                 duration_tokens +
-                bar_tokens
+                bar_tokens +
+                new_chord_quality_vocab
         )
 
         counter = Counter(self.tokens)

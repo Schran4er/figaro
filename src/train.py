@@ -12,6 +12,9 @@ from models.vae import VqVaeModule
 
 from datasets import dataset_type, DataSetType
 
+from change_vocab import change_size_inout_layer_new_chord_vocab, get_new_chord_quality_vocab, \
+    NEW_FIGARO_CHECKPOINT_PATH, NEW_VAE_CHECKPOINT_PATH, change_size_desc_layer_new_chord_vocab
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 ROOT_DIR = os.getenv('ROOT_DIR', './lmd_full')
@@ -46,6 +49,8 @@ N_WORKERS = min(os.cpu_count(), float(os.getenv('N_WORKERS', 'inf')))
 if device.type == 'cuda':
     N_WORKERS = min(N_WORKERS, 8 * torch.cuda.device_count())
 N_WORKERS = int(N_WORKERS)
+
+MY_CHECKPOINT_DIR = '../checkpoints/my_checkpoint/'
 
 
 def main():
@@ -92,6 +97,8 @@ def main():
     MAX_CONTEXT = min(1024, CONTEXT_SIZE)
 
     VAE_CHECKPOINT = "../checkpoints/vq-vae.ckpt"  # fixme correct path
+    # CHECKPOINT = '../checkpoints/figaro.ckpt'
+    CHECKPOINT = NEW_FIGARO_CHECKPOINT_PATH # fixme
 
     if MODEL in ['figaro-learned', 'figaro'] and VAE_CHECKPOINT:
         vae_module = VqVaeModule.load_from_checkpoint(checkpoint_path=VAE_CHECKPOINT)
@@ -105,6 +112,7 @@ def main():
     ### Create and train model ###
 
     # load model from checkpoint if available
+
 
     if CHECKPOINT:
         model_class = {
@@ -120,6 +128,8 @@ def main():
             'figaro-no-meta': Seq2SeqModule,
             'baseline': Seq2SeqModule,
         }[MODEL]
+        # new_qualities = ['sus', 'power', '6']
+        # change_size_new_chord_vocab(module=model_class, new_qualities=new_qualities)
         model = model_class.load_from_checkpoint(checkpoint_path=CHECKPOINT)
 
     else:
@@ -203,11 +213,13 @@ def main():
 
     checkpoint_callback = pl.callbacks.model_checkpoint.ModelCheckpoint(
         monitor='valid_loss',
-        dirpath=os.path.join(OUTPUT_DIR, MODEL),
+        # dirpath=os.path.join(OUTPUT_DIR, MODEL),
+        dirpath=os.path.join('../checkpoints/my_checkpoint', MODEL),
         filename='{step}-{valid_loss:.2f}',
         save_last=True,
         save_top_k=2,
         every_n_train_steps=1000,
+        # every_n_train_steps=1,
     )
 
     lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='step')
@@ -228,10 +240,21 @@ def main():
         stochastic_weight_avg=True,
         gradient_clip_val=1.0,
         terminate_on_nan=True,
-        resume_from_checkpoint=CHECKPOINT
+        resume_from_checkpoint=CHECKPOINT,
     )
 
+    # used to adjust the model size after chord vocabulary extension
+    new_qualities = ['sus', 'pwr', '6']
+
     trainer.fit(model, datamodule)
+
+    # change_size_desc_layer_new_chord_vocab(module=model, new_qualities=new_qualities)
+    # change_size_inout_layer_new_chord_vocab(module=model, new_qualities=new_qualities)
+    # change_size_inout_layer_new_chord_vocab(module=vae_module, new_qualities=new_qualities)
+
+    trainer.save_checkpoint(NEW_FIGARO_CHECKPOINT_PATH)
+
+    debug_stop = 1
 
 
 if __name__ == '__main__':

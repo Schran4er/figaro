@@ -42,7 +42,6 @@ from constants import (
 )
 
 
-
 class Tokens:
   def get_instrument_tokens(key=INSTRUMENT_KEY):
     tokens = [f'{key}_{pretty_midi.program_to_instrument_name(i)}' for i in range(128)]
@@ -50,6 +49,7 @@ class Tokens:
     return tokens
 
   def get_chord_tokens(key=CHORD_KEY, qualities = ['maj', 'min', 'dim', 'aug', 'dom7', 'maj7', 'min7', 'None']):
+  # def get_chord_tokens(key=CHORD_KEY, qualities = ['maj', 'min', 'dim', 'aug', 'dom7', 'maj7', 'min7', 'None', 'sus', 'power', '6']):
     pitch_classes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
     chords = [f'{root}:{quality}' for root in pitch_classes for quality in qualities]
@@ -65,7 +65,7 @@ class Tokens:
     return tokens
 
   def get_midi_tokens(
-    instrument_key=INSTRUMENT_KEY, 
+    instrument_key=INSTRUMENT_KEY,
     time_signature_key=TIME_SIGNATURE_KEY,
     pitch_key=PITCH_KEY,
     velocity_key=VELOCITY_KEY,
@@ -87,12 +87,12 @@ class Tokens:
 
     return (
       time_sig_tokens +
-      tempo_tokens + 
-      instrument_tokens + 
-      pitch_tokens + 
-      velocity_tokens + 
-      duration_tokens + 
-      bar_tokens + 
+      tempo_tokens +
+      instrument_tokens +
+      pitch_tokens +
+      velocity_tokens +
+      duration_tokens +
+      bar_tokens +
       position_tokens
     )
 
@@ -103,7 +103,7 @@ class Vocab:
     self.specials = specials
     for i, token in enumerate(self.specials):
       self.vocab.insert_token(token, i)
-    
+
     if unk_token in specials:
       self.vocab.set_default_index(self.vocab.get_stoi()[unk_token])
 
@@ -129,18 +129,23 @@ class Vocab:
 
 
 class RemiVocab(Vocab):
-  def __init__(self):
+  def __init__(self, update_vocab=True):
     midi_tokens = Tokens.get_midi_tokens()
     chord_tokens = Tokens.get_chord_tokens()
 
-    self.tokens = midi_tokens + chord_tokens
+    if update_vocab:
+      new_qualities = ['sus', 'power', '6']  # fixme
+      new_chord_quality_vocab = get_new_chord_quality_vocab(new_qualities)
+      self.tokens = midi_tokens + chord_tokens + new_chord_quality_vocab
+    else:
+      self.tokens = midi_tokens + chord_tokens
 
     counter = Counter(self.tokens)
     super().__init__(counter)
 
 
 class DescriptionVocab(Vocab):
-  def __init__(self):
+  def __init__(self, update_vocab=True):
     time_sig_tokens = Tokens.get_time_signature_tokens()
     instrument_tokens = Tokens.get_instrument_tokens()
     chord_tokens = Tokens.get_chord_tokens()
@@ -152,15 +157,26 @@ class DescriptionVocab(Vocab):
     duration_tokens = [f'{MEAN_DURATION_KEY}_{i}' for i in range(len(DEFAULT_MEAN_DURATION_BINS))]
 
     self.tokens = (
-      time_sig_tokens +
-      instrument_tokens + 
-      chord_tokens + 
-      density_tokens + 
-      velocity_tokens + 
-      pitch_tokens + 
-      duration_tokens + 
-      bar_tokens
+            time_sig_tokens +
+            instrument_tokens +
+            chord_tokens +
+            density_tokens +
+            velocity_tokens +
+            pitch_tokens +
+            duration_tokens +
+            bar_tokens
     )
+    new_qualities = ['sus', 'pwr', '6']  # fixme
+    if update_vocab:
+      self.tokens = self.tokens + get_new_chord_quality_vocab(new_qualities)
 
     counter = Counter(self.tokens)
     super().__init__(counter)
+
+
+def get_new_chord_quality_vocab(new_qualities):
+  pitch_classes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+  new_chord_qualities = [f'{root}:{quality}' for root in pitch_classes for quality in new_qualities]
+  new_chord_quality_vocab = [f'CHORD_{chord}' for chord in new_chord_qualities]
+  return new_chord_quality_vocab
+  # return new_chord_qualities
